@@ -101,9 +101,8 @@ public class UDPClient {
     private static void handshakeCheck(SocketAddress routerAddr, InetSocketAddress serverAddr) throws IOException {
         try(DatagramChannel channel = DatagramChannel.open()){
             String msg = "Hello World";
-            //find the partition number and distribute the packet in a separate method
-            //int partiNo = getThePartiNo(msg);
-            //for(int i =1; i <=partiNo; i++){
+            
+
             System.out.println("The length is:" +msg.length());
             Packet p = new Packet.Builder()
                     .setType(0)

@@ -1,57 +1,12 @@
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.File;
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.channels.DatagramChannel;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
+import java.util.Scanner;
 import static java.util.Arrays.asList;
 
 public class UDPServer {
 
-    //private static final Logger logger = LoggerFactory.getLogger(UDPServer.class);
-
-    private void listenAndServe(int port) throws IOException {
-
-        try (DatagramChannel channel = DatagramChannel.open()) {
-            channel.bind(new InetSocketAddress(port));
-            //logger.info("EchoServer is listening at {}", channel.getLocalAddress());
-            ByteBuffer buf = ByteBuffer
-                    .allocate(Packet.MAX_LEN)
-                    .order(ByteOrder.BIG_ENDIAN);
-
-            for (; ; ) {
-                buf.clear();
-                SocketAddress router = channel.receive(buf);
-
-                // Parse a packet from the received raw data.
-                buf.flip();
-                Packet packet = Packet.fromBuffer(buf);
-                buf.flip();
-
-                String payload = new String(packet.getPayload(), UTF_8);
-                System.out.println(payload);
-                //logger.info("Packet: {}", packet);
-                //logger.info("Payload: {}", payload);
-                //logger.info("Router: {}", router);
-
-                // Send the response to the router not the client.
-                // The peer address of the packet is the address of the client already.
-                // We can use toBuilder to copy properties of the current packet.
-                // This demonstrate how to create a new packet from an existing packet.
-                Packet resp = packet.toBuilder()
-                        .setPayload(payload.getBytes())
-                        .create();
-                channel.send(resp.toBuffer(), router);
-
-            }
-        }
-    }
 
     public static void main(String[] args) throws IOException {
         OptionParser parser = new OptionParser();
@@ -61,7 +16,39 @@ public class UDPServer {
 
         OptionSet opts = parser.parse(args);
         int port = Integer.parseInt((String) opts.valueOf("port"));
-        UDPServer server = new UDPServer();
-        server.listenAndServe(port);
+        System.out.println("The syntax to initialize the UDP server is ");
+        System.out.println("httpfs is a simple file server.");
+        System.out.println("usage: httpfs [-v] [-p PORT] [-d PATH-TO-DIR]");
+        System.out.println("-v Prints debugging messages.");
+        System.out.println("-p Specifies the port number that the server will listen and serve at.");
+        System.out.println("Default is 8080.");
+        System.out.println("-d Specifies the directory that the server will use to read/write");
+        System.out.println("requested files. Default is the current directory when launching the");
+        System.out.println("application.");
+        System.out.println("You can set the scope of the server to one of the directories listed below");
+        System.out.println("By default it will take the scope of the entire server directory");
+        returnDirectory();
+        System.out.println();
+        System.out.println();
+        Scanner sc = new Scanner(System.in);
+        String command = sc.nextLine();
+        HTTPServer server = new HTTPServer(command);
+    }
+
+    public static void returnDirectory() throws IOException {
+        String path  = new java.io.File( "." ).getCanonicalPath() + "/src/" + "/ServerFileDir/";
+        File folder = new File(path);
+        File[] listOfFiles = folder.listFiles();
+        String str = "\n";
+        assert listOfFiles != null;
+        int j =1;
+        for (int i = 0; i < listOfFiles.length; i++) {
+
+            if (listOfFiles[i].isFile()) {
+            } else if (listOfFiles[i].isDirectory()) {
+                System.out.println(" Directory" + j + ": " + listOfFiles[i].getName());
+                j = j + 1;
+            }
+        }
     }
 }

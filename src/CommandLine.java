@@ -11,11 +11,23 @@
  * @since 03-10-2019
  */
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
+import java.net.SocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.DatagramChannel;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Scanner;
+import java.util.Set;
+
+import static java.nio.channels.SelectionKey.OP_READ;
 
 public class CommandLine {
 
@@ -161,11 +173,11 @@ public class CommandLine {
             if (holder.equalsIgnoreCase("get")){
                 if (buffer.startsWith("/")) {
                     if (buffer.equals("/")) {
-                        parsedData.put("URL", "http://localhost:8080");
+                        parsedData.put("URL", "http://localhost:8007");
                         return 1;
                     } else {
                         parsedData.put("file", buffer.substring(1));
-                        parsedData.put("URL", "http://localhost:8080");
+                        parsedData.put("URL", "http://localhost:8007");
                         return 1;
                     }
 
@@ -176,13 +188,13 @@ public class CommandLine {
             else if(holder.equalsIgnoreCase("post")){
                 if (buffer.startsWith("/")) {
                     if (buffer.equals("/")) {
-                        parsedData.put("URL", "http://localhost:8080");
+                        parsedData.put("URL", "http://localhost:8007");
                         return 1;
                     } else {
                         buffer = buffer.substring(1);
                         if(buffer.contains(" ")){
                             parsedData.put("file", buffer.substring(0, buffer.indexOf(" ")));
-                            parsedData.put("URL", "http://localhost:8080");
+                            parsedData.put("URL", "http://localhost:8007");
                             parsedData.put("message", buffer.substring(buffer.indexOf(" ")+1));
                             return 1;
                         }
@@ -692,12 +704,17 @@ public class CommandLine {
      * @param args
      */
     public static void main(String args[]){
+        Scanner sc =  new Scanner(System.in);
+        System.out.println("\n Enter the \"IP address:port\" and the server you want to connect \n");
+        String ipPort = sc.nextLine();
         parsedData = new HashMap<String, String>();
             try {
                 DateFormat df = new SimpleDateFormat("dd/MM/yy HH:mm:ss");
                 Date dateObj = new Date();
                 byte[] b = new byte[1024];
                 parsedData.clear();
+                HTTPCClient client = new HTTPCClient(parsedData, args, ipPort);
+                client.createConnection();
                 System.out.print(df.format(dateObj)+" LocalComp-HTTPCPrompt:~ ");
                 for (int r; (r = System.in.read(b)) != -1; ) {
                     String buffer = new String(b, 0, r);
@@ -706,15 +723,16 @@ public class CommandLine {
                     Date dateObjnew = new Date();
                     System.out.println("\n");
                     if(val == 1) {
-                        HTTPCClient client = new HTTPCClient(parsedData);
+
+                        client.setParsedData(parsedData);
                         if (parsedData.get("request").equalsIgnoreCase("get")) {
-                            HTTPCClient.GETRequest();
+                            client.GETRequest();
                         } else if (parsedData.get("request").equalsIgnoreCase("post")) {
-                            HTTPCClient.POSTRequest();
+                            client.POSTRequest();
                         } else if (parsedData.get("request").equalsIgnoreCase("fileget")) {
-                            HTTPCClient.FILEGETRequest();
+                            client.FILEGETRequest();
                         } else if (parsedData.get("request").equalsIgnoreCase("filepost")) {
-                            HTTPCClient.FILEPOSTRequest();
+                            client.FILEPOSTRequest();
                         }
                     }
 
@@ -726,5 +744,6 @@ public class CommandLine {
                 e.printStackTrace();
             }
     }
+
 
 }
